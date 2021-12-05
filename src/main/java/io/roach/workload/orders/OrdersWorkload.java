@@ -104,7 +104,7 @@ public class OrdersWorkload extends AbstractWorkload {
         }
 
         if (queueSize <= 0) {
-            queueSize = Integer.MAX_VALUE;
+            queueSize = 10_000;
         }
 
         console.green(">> Starting orders workload\n");
@@ -125,7 +125,11 @@ public class OrdersWorkload extends AbstractWorkload {
         boundedExecutor.submit(() -> {
             IntStream.rangeClosed(1, partitions).forEach(value -> {
                 Class<? extends AbstractOrder> orderType = SchemaSupport.orderEntities.get(value - 1);
-                inBox.offer(OrderEntities.generateOrderEntities(orderType, batchSizeNum, includeJson));
+                try {
+                    inBox.put(OrderEntities.generateOrderEntities(orderType, batchSizeNum, includeJson));
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
             });
         }, "producer (" + partitions + " tables)", runtimeDuration);
 
@@ -137,7 +141,9 @@ public class OrdersWorkload extends AbstractWorkload {
                     if (!dryRun) {
                         orderRepository.insertOrders(orderBatch);
                     }
-                    outBox.offer(orderBatch);
+                    if (readThreads > 0) {
+                        outBox.put(orderBatch);
+                    }
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
                 }

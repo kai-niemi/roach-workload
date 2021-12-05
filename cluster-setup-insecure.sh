@@ -7,13 +7,13 @@
 # roachprod run $CLUSTER "sudo killall -9 cockroach"
 # roachprod wipe $CLUSTER --preserve-certs
 
-cloud="gce"
+cloud="aws"
 nodes="1-3"
 client="4"
 
 if [ "${cloud}" = "aws" ]; then
 region=eu-central-1
-roachprod create "$CLUSTER" --clouds=aws --aws-machine-type-ssd=c5d.2xlarge --geo --local-ssd --nodes=4 \
+roachprod create "$CLUSTER" --clouds=aws --aws-machine-type-ssd=c5d.4xlarge --geo --local-ssd --nodes=4 \
 --aws-zones=\
 eu-central-1a,\
 eu-central-1b,\
