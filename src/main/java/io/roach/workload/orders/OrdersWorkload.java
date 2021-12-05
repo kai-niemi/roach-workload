@@ -36,31 +36,13 @@ public class OrdersWorkload extends AbstractWorkload {
     @Qualifier("jpaOrderRepository")
     private OrderRepository jpaOrderRepository;
 
+    @Autowired
+    @Qualifier("fakeOrderRepository")
+    private OrderRepository fakeOrderRepository;
+
     @Override
     public String prompt() {
         return "orders:$ ";
-    }
-
-    @ShellMethod(value = "List test")
-    public void list(@ShellOption(help = "data access method (jdbc|jdbcx|jpa)", defaultValue = "jdbc") String method,
-                     @ShellOption(help = "start offset", defaultValue = "0") int offset,
-                     @ShellOption(help = "item limit per page", defaultValue = "50") int limit,
-                     @ShellOption(help = "max pages", defaultValue = "500") int pageLimit
-    ) {
-        OrderRepository repository = getOrderRepositoryUsing(method);
-        int page = 1;
-        int total = 0;
-        List<Order1> orders;
-        do {
-            orders = repository.findOrders(Order1.class, LocalDate.now(), offset, limit);
-            console.yellow("Page %d offset %d limit %d\n", page, offset, limit);
-//            orders.forEach(o -> console.green("%s\n", o));
-            offset += limit;
-            page++;
-            total += orders.size();
-        } while (!orders.isEmpty() && page < pageLimit);
-
-        console.yellow("Orders in total %,d\n", total);
     }
 
     @ShellMethod(value = "Initialize orders workload")
@@ -85,9 +67,8 @@ public class OrdersWorkload extends AbstractWorkload {
             @ShellOption(help = "queue capacity (default is unbounded)", defaultValue = "-1") int queueSize,
             @ShellOption(help = "order batch size", defaultValue = "16") String batchSize,
             @ShellOption(help = "execution duration", defaultValue = "30m") String duration,
-            @ShellOption(help = "data access method (jdbc|jdbcx|jpa)", defaultValue = "jdbc") String method,
-            @ShellOption(help = "include JSON payload", defaultValue = "false") boolean includeJson,
-            @ShellOption(help = "dry run (disable SQL ops)", defaultValue = "false") boolean dryRun
+            @ShellOption(help = "data access method (jdbc|jdbcx|jpa|fake)", defaultValue = "jdbc") String method,
+            @ShellOption(help = "include JSON payload", defaultValue = "false") boolean includeJson
     ) {
         final int batchSizeNum = Multiplier.parseInt(batchSize);
         final Duration runtimeDuration = DurationFormat.parseDuration(duration);
@@ -104,7 +85,7 @@ public class OrdersWorkload extends AbstractWorkload {
         }
 
         if (queueSize <= 0) {
-            queueSize = 10_000;
+            queueSize = 500_000;
         }
 
         console.green(">> Starting orders workload\n");
@@ -116,7 +97,6 @@ public class OrdersWorkload extends AbstractWorkload {
         console.yellow("Include JSON payload: %s\n", includeJson);
         console.yellow("Runtime duration: %s\n", duration);
         console.yellow("Data access method: %s\n", method);
-        console.yellow("Dry run: %s\n", dryRun);
 
         final LinkedBlockingQueue<List<? extends AbstractOrder>> inBox = new LinkedBlockingQueue<>(queueSize);
         final LinkedBlockingQueue<List<? extends AbstractOrder>> outBox = new LinkedBlockingQueue<>(queueSize);
@@ -138,9 +118,7 @@ public class OrdersWorkload extends AbstractWorkload {
             boundedExecutor.submit(() -> {
                 try {
                     List<? extends AbstractOrder> orderBatch = inBox.take();
-                    if (!dryRun) {
-                        orderRepository.insertOrders(orderBatch);
-                    }
+                    orderRepository.insertOrders(orderBatch);
                     if (readThreads > 0) {
                         outBox.put(orderBatch);
                     }
@@ -154,7 +132,7 @@ public class OrdersWorkload extends AbstractWorkload {
             boundedExecutor.submit(() -> {
                 try {
                     List<? extends AbstractOrder> orderBatch = outBox.take();
-                    if (!dryRun && orderBatch.size() > 0) {
+                    if (orderBatch.size() > 0) {
                         orderRepository.readOrders(orderBatch.get(0).getClass(), orderBatch);
                     }
                 } catch (InterruptedException e) {
@@ -164,6 +142,32 @@ public class OrdersWorkload extends AbstractWorkload {
         });
     }
 
+    @ShellMethod(value = "List orders using pagination")
+    public void list(@ShellOption(help = "data access method (jdbc|jdbcx|jpa)", defaultValue = "jdbc") String method,
+                     @ShellOption(help = "start offset", defaultValue = "0") int offset,
+                     @ShellOption(help = "item limit per page", defaultValue = "500") int limit,
+                     @ShellOption(help = "max pages", defaultValue = "500") int pageLimit
+    ) {
+        OrderRepository repository = getOrderRepositoryUsing(method);
+
+        console.green("Listing %d pages at most\n", pageLimit);
+
+        int page = 1;
+        int total = 0;
+        List<Order1> orders;
+
+        do {
+            orders = repository.findOrders(Order1.class, LocalDate.now(), offset, limit);
+            console.yellow("Page %d offset %d limit %d\n", page, offset, limit);
+//            orders.forEach(o -> console.green("%s\n", o));
+            offset += limit;
+            page++;
+            total += orders.size();
+        } while (!orders.isEmpty() && page < pageLimit);
+
+        console.yellow("%,d orders in %,d pages\n", page, total);
+    }
+
     private OrderRepository getOrderRepositoryUsing(String method) {
         if ("jdbc".equalsIgnoreCase(method)) {
             return jdbcOrderRepository;
@@ -171,6 +175,8 @@ public class OrdersWorkload extends AbstractWorkload {
             return jdbcOrderRepositoryExplicit;
         } else if ("jpa".equalsIgnoreCase(method)) {
             return jpaOrderRepository;
+        } else if ("fake".equalsIgnoreCase(method)) {
+            return fakeOrderRepository;
         }
         throw new IllegalArgumentException("Unknown access method (jdbc|jdbcx|jpa): " + method);
     }

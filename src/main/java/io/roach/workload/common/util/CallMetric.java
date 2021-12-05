@@ -25,7 +25,7 @@ public class CallMetric {
 
     private static final String FOOTER_PATTERN = "%-40s %7.0f %c%7.1f %10.1f %10.2f %10.2f %10.2f %10.2f %,11d %,11d";
 
-    public static final int FRAME_SIZE = 500;
+    public static final int FRAME_SIZE = 500_000;
 
     private final Map<String, Context> metrics = Collections.synchronizedMap(new TreeMap<>());
 
