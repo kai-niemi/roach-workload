@@ -1,0 +1,9 @@
+########################
+# Spring boot properties
+# http://docs.spring.io/spring-boot/docs/current/reference/html/common-application-properties.html
+########################
+spring:
+  datasource:
+    url: jdbc:postgresql://192.168.1.99:26300/workload?sslmode=disable
+    hikari:
+      pool-name: workload_orders

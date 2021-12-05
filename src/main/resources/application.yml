@@ -1,0 +1,54 @@
+########################
+# Spring boot properties
+# http://docs.spring.io/spring-boot/docs/current/reference/html/common-application-properties.html
+########################
+spring:
+  main:
+    allow-circular-references: true
+  application:
+    name: roach-workload
+  profiles:
+    active: undefined
+  output:
+    ansi:
+      enabled: ALWAYS
+  # Datasource
+  datasource:
+    url: jdbc:postgresql://localhost:26257/workload?sslmode=disable
+    driver-class-name: org.postgresql.Driver
+    username: root
+    password:
+    hikari:
+      maximum-pool-size: 50
+#      minimum-idle: 50
+      connection-init-sql: SELECT 1
+#      connection-timeout: 15000
+#      validation-timeout: 20000
+      max-lifetime: 60000
+#      initialization-fail-timeout: -1
+  # JPA/transactions
+  jpa:
+    open-in-view: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.CockroachDB201Dialect
+        connection:
+          provider_disables_autocommit: false
+logging:
+  file:
+    name: "workload.log"
+  pattern:
+    console: "%clr(%d{${LOG_DATEFORMAT_PATTERN:yyyy-MM-dd HH:mm:ss.SSS}}){faint} %clr(${LOG_LEVEL_PATTERN:%5p}) %clr([%logger{39}]){cyan} %m%n${LOG_EXCEPTION_CONVERSION_WORD:%wEx}"
+    file: "%d{${LOG_DATEFORMAT_PATTERN:yyyy-MM-dd HH:mm:ss.SSS}} ${LOG_LEVEL_PATTERN:%5p} [%t] %logger{39} : %m%n${LOG_EXCEPTION_CONVERSION_WORD:%wEx}"
+roach:
+  history:
+    file: .clienthistory
+  # Total core thread pool size, e.g. the number of threads to keep in the pool even if they are idle. The thread
+  # pool will prefer to start new threads up to this size rather than queue workers.
+  # Default is detected number of CPUs
+  thread-pool-size: -1
+  # Number of threads allowed in queue before blocking.
+  # Default is thread pool size x 2
+  thread-queue-size: -1
+  # App name for DB console
+  application-name:

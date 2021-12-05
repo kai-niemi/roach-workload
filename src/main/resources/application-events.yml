@@ -1,0 +1,7 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:26257/workload?sslmode=disable
+    hikari:
+      pool-name: workload_events
+roach:
+  application-name: workload_events
