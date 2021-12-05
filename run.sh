@@ -1,3 +1,3 @@
 #!/bin/bash
 
-java -jar roach-workload.jar
+java -jar target/roach-workload.jar $*

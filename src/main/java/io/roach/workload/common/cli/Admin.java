@@ -66,9 +66,6 @@ public class Admin implements Quit.Command {
 
     @ShellMethod(value = "Exit the shell", key = {"q", "quit", "exit"})
     public void quit() {
-        if (boundedExecutor.hasActiveWorkers()) {
-            console.red("There are %d active workers", boundedExecutor.activeWorkers());
-        }
         applicationContext.close();
         throw new ExitRequest();
     }
@@ -85,7 +82,6 @@ public class Admin implements Quit.Command {
     }
 
     @ShellMethod(value = "Cancel active workloads", key = {"cancel", "c", "x"})
-    @ShellMethodAvailability("activeWorkersCheck")
     public void cancel() {
         boundedExecutor.cancelAndRestart();
     }

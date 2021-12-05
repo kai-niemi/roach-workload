@@ -7,7 +7,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Currency;
 import java.util.List;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
@@ -177,8 +176,6 @@ public class BankWorkload extends AbstractWorkload {
 
         final AccountService accountService = getAccountService(method);
 
-        final CountDownLatch latch = new CountDownLatch(matchingRegions.size() * threads);
-
         console.green("Scheduling workers for regions: %s\n", matchingRegions);
 
         matchingRegions
@@ -188,6 +185,8 @@ public class BankWorkload extends AbstractWorkload {
                             .unmodifiableList(accountService.findAccountsByRegion(region.name(), 0, 5000));
 
                     Duration runtimeDuration = DurationFormat.parseDuration(duration);
+
+                    console.green("Region %s accounts %d\n", region, regionAccounts.size());
 
                     final Runnable unitOfWork = () -> {
                         TransactionRequest.Builder requestBuilder = TransactionRequest.builder()
@@ -230,17 +229,9 @@ public class BankWorkload extends AbstractWorkload {
                     };
 
                     IntStream.rangeClosed(1, threads).forEach(value -> {
-                        try {
-                            latch.await();
-                        } catch (InterruptedException e) {
-                            e.printStackTrace();
-                        }
                         boundedExecutor.submit(unitOfWork, "writer (" + region.name() + ") " + value, runtimeDuration);
                     });
                 });
-
-        console.green("Let it rip!\n");
-        latch.countDown();
     }
 
     @ShellMethod(value = "Run balance query workload")
@@ -279,7 +270,7 @@ public class BankWorkload extends AbstractWorkload {
                         accountBalances.offer(balance);
                     };
 
-                    IntStream.rangeClosed(1,threads).forEach(value -> {
+                    IntStream.rangeClosed(1, threads).forEach(value -> {
                         boundedExecutor.submit(unitOfWork, followerReads
                                 ? "snapshot " : "" + "reader (" + region.name() + ") " + value, runtimeDuration);
                     });
@@ -301,7 +292,7 @@ public class BankWorkload extends AbstractWorkload {
     public void summary() {
         AtomicInteger totalAccounts = new AtomicInteger();
 
-        console.green("Total balance per region\n");
+        console.green("Total balance per region:\n");
 
         Arrays.stream(Region.values()).sequential().forEach(region -> {
             AccountSummary accountSummary = accountServiceJdbc.accountSummary(region);

@@ -95,7 +95,21 @@ public class BoundedExecutor {
 
     public void shutdown() {
         logger.info("Shutdown with {} active workers", activeWorkers());
-        executorService.shutdown();
+
+        if (semaphore.hasQueuedThreads()) {
+            semaphore.drainPermits();
+        }
+
+        executorService.shutdownNow();
+
+        try {
+            while (!executorService.awaitTermination(5, TimeUnit.SECONDS)) {
+                logger.info("Awaiting termination of {} workers", activeWorkers());
+            }
+            logger.info("All workers terminated");
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 
     public void cancelAndRestart(int corePoolSize, int queueSize) {
@@ -106,11 +120,12 @@ public class BoundedExecutor {
     }
 
     public void cancelAndRestart() {
+        logger.info("Terminating {} active workers - awaiting completion", activeWorkers());
+
         if (semaphore.hasQueuedThreads()) {
             semaphore.drainPermits();
         }
 
-        logger.info("Terminating {} active workers - awaiting completion", activeWorkers());
         this.executorService.shutdownNow();
 
         try {
