@@ -52,19 +52,18 @@ import io.roach.workload.common.Workload;
 @ComponentScan(basePackages = "io.roach")
 public class Application implements PromptProvider {
     private static void printHelpAndExit(String message) {
-        System.out.println("Usage: java --jar roach-workload.jar <options> [profile]");
+        System.out.println("Usage: roach-workload.jar <options> [profile <args> && ..]");
         System.out.println();
         System.out.println("Options:");
         System.out.println("--help          this help");
         System.out.println();
         System.out.println("Profile:");
-        System.out.println("bank            enable bank workload");
-        System.out.println("orders          enable orders workload");
-        System.out.println("events          enable events workload");
-        System.out.println("query           enable query workload");
+        System.out.println("bank            bank workload - a financial ledger simulation");
+        System.out.println("orders          orders workload - multi-table purchase order creation");
+        System.out.println("events          events - transactional outbox events");
+        System.out.println("query           query - adhoc query execution from file or CLI");
         System.out.println();
-        System.out.println("All other options and args are passed to the interactive CLI, use:");
-        System.out.println("java --jar roach-workload.jar help");
+        System.out.println("All other options and args are passed to the interactive CLI.");
         System.out.println();
         System.out.println(message);
         System.exit(0);
@@ -75,6 +74,9 @@ public class Application implements PromptProvider {
         List<String> argsFinal = new ArrayList<>();
 
         Arrays.asList(args).forEach(s -> {
+            if (s.equals("--help")) {
+                printHelpAndExit("");
+            }
             if (Profiles.all().contains(s)) {
                 profiles.add(s);
             } else {
@@ -82,7 +84,11 @@ public class Application implements PromptProvider {
             }
         });
 
-        if (profiles.size() > 0) {
+        if (profiles.isEmpty()) {
+            if (!StringUtils.hasLength(System.getProperty("spring.profiles.active"))) {
+                printHelpAndExit("Missing profile(s)");
+            }
+        } else {
             System.setProperty("spring.profiles.active", StringUtils.collectionToCommaDelimitedString(profiles));
         }
 
@@ -124,7 +130,7 @@ public class Application implements PromptProvider {
 
     @Override
     public AttributedString getPrompt() {
-        return new AttributedString(workload.getMetadata().prompt() + ":$ ",
+        return new AttributedString(workload.prompt(),
                 AttributedStyle.DEFAULT.foreground(AttributedStyle.YELLOW).bold());
     }
 }

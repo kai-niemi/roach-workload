@@ -34,29 +34,8 @@ public class EventsWorkload extends AbstractWorkload {
     private JdbcTemplate jdbcTemplate;
 
     @Override
-    public Metadata getMetadata() {
-        return new Metadata() {
-            @Override
-            public String prompt() {
-                return "events";
-            }
-
-            @Override
-            public String name() {
-                return "Events";
-            }
-
-            @Override
-            public String description() {
-                return "Inserts outbox events to one or more tables in batches";
-            }
-        };
-    }
-
-    @Override
-    @ShellMethod(value = "Print workload info")
-    public void info() {
-        printInfo();
+    public String prompt() {
+        return "events:$ ";
     }
 
     @ShellMethod(value = "Initialize events workload")
@@ -74,6 +53,7 @@ public class EventsWorkload extends AbstractWorkload {
 
     @ShellMethod(value = "Run events workload")
     public void run(
+            @ShellOption(help = "number of threads per partition", defaultValue = "1") int threads,
             @ShellOption(help = "number of partitions (tables)", defaultValue = "10") int partitions,
             @ShellOption(help = "number of JSON payload items (0 disables)", defaultValue = "1") int payloadItems,
             @ShellOption(help = "execution duration (expression)", defaultValue = "30m") String duration,
@@ -83,15 +63,19 @@ public class EventsWorkload extends AbstractWorkload {
         int batchSizeNum = Multiplier.parseInt(batchSize);
         Duration runtimeDuration = DurationFormat.parseDuration(duration);
 
-        console.blue(">> Starting events workload <<\n");
+        console.green(">> Starting events workload <<\n");
+        console.yellow("Number of threads: %d\n", threads);
         console.yellow("Number of partitions: %d\n", partitions);
         console.yellow("Number of payload items: %d\n", payloadItems);
         console.yellow("Runtime duration: %s\n", duration);
         console.yellow("Batch size: %d\n", batchSizeNum);
 
-        IntStream.rangeClosed(1, partitions).forEach(value -> {
-            boundedExecutor.submit(() -> submitBatch(value, batchSizeNum, payloadItems, dryRun),
-                    "writer #" + value + " (batch size " + batchSize + ")", runtimeDuration);
+        IntStream.rangeClosed(1, partitions).forEach(p -> {
+            IntStream.rangeClosed(1, threads).forEach(t -> {
+                boundedExecutor.submit(() -> submitBatch(p, batchSizeNum, payloadItems, dryRun),
+                        "writer #" + p + " thread " + t
+                                + " (batch size " + batchSize + ")", runtimeDuration);
+            });
         });
     }
 
@@ -134,7 +118,7 @@ public class EventsWorkload extends AbstractWorkload {
         outboxEvent.setEventType("user_profile_updated");
         outboxEvent.setAggregateType("User");
         if (payloadItems > 0) {
-            outboxEvent.setPayload(RandomData.randomJson(payloadItems, 2));
+            outboxEvent.setPayload(RandomData.randomUserJson(payloadItems, 2));
         }
         return outboxEvent;
     }

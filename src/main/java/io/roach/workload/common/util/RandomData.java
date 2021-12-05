@@ -180,7 +180,7 @@ public class RandomData {
         throw new IllegalStateException("This is not possible");
     }
 
-    public static String randomJson(int items, int nestedItems) {
+    public static String randomUserJson(int items, int nestedItems) {
         ObjectNode root = objectMapper.createObjectNode();
         ArrayNode users = root.putArray("users");
 

@@ -15,7 +15,6 @@ import org.springframework.shell.ExitRequest;
 import org.springframework.shell.standard.ShellCommandGroup;
 import org.springframework.shell.standard.ShellComponent;
 import org.springframework.shell.standard.ShellMethod;
-import org.springframework.shell.standard.ShellMethodAvailability;
 import org.springframework.shell.standard.commands.Quit;
 import org.springframework.util.FileCopyUtils;
 

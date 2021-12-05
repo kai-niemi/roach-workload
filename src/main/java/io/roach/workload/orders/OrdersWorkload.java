@@ -37,29 +37,8 @@ public class OrdersWorkload extends AbstractWorkload {
     private OrderRepository jpaOrderRepository;
 
     @Override
-    public Metadata getMetadata() {
-        return new Metadata() {
-            @Override
-            public String prompt() {
-                return "orders";
-            }
-
-            @Override
-            public String name() {
-                return "Orders";
-            }
-
-            @Override
-            public String description() {
-                return "Inserts purchase orders to multiple tables in batches";
-            }
-        };
-    }
-
-    @Override
-    @ShellMethod(value = "Print workload info")
-    public void info() {
-        printInfo();
+    public String prompt() {
+        return "orders:$ ";
     }
 
     @ShellMethod(value = "List test")
@@ -128,7 +107,7 @@ public class OrdersWorkload extends AbstractWorkload {
             queueSize = Integer.MAX_VALUE;
         }
 
-        console.yellow(">> Starting orders workload\n");
+        console.green(">> Starting orders workload\n");
         console.yellow("Number of tables: %d\n", partitions);
         console.yellow("Number of write threads: %d\n", writeThreads);
         console.yellow("Number of read threads: %d\n", readThreads);

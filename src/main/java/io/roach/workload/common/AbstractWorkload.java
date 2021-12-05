@@ -16,11 +16,4 @@ public abstract class AbstractWorkload implements Workload {
 
     @Autowired
     protected BoundedExecutor boundedExecutor;
-
-    protected final void printInfo() {
-        Metadata metadata = getMetadata();
-        console.magenta("Workload Info\n");
-        console.green("Name: %s\n", metadata.name());
-        console.green("Description: %s\n", metadata.description());
-    }
 }

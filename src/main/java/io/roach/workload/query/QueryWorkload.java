@@ -15,7 +15,6 @@ import org.springframework.shell.standard.ShellComponent;
 import org.springframework.shell.standard.ShellMethod;
 import org.springframework.shell.standard.ShellOption;
 import org.springframework.util.FileCopyUtils;
-import org.springframework.util.FileSystemUtils;
 
 import io.roach.workload.Profiles;
 import io.roach.workload.common.AbstractWorkload;
@@ -28,29 +27,8 @@ public class QueryWorkload extends AbstractWorkload {
     private JdbcTemplate jdbcTemplate;
 
     @Override
-    @ShellMethod(value = "Print workload info")
-    public void info() {
-        printInfo();
-    }
-
-    @Override
-    public Metadata getMetadata() {
-        return new Metadata() {
-            @Override
-            public String prompt() {
-                return "query";
-            }
-
-            @Override
-            public String name() {
-                return "Query";
-            }
-
-            @Override
-            public String description() {
-                return "Adhoc SQL query workload";
-            }
-        };
+    public String prompt() {
+        return "query:$ ";
     }
 
     @ShellMethod(value = "Initialize workload")
@@ -82,7 +60,7 @@ public class QueryWorkload extends AbstractWorkload {
             finalSql = sql;
         }
 
-        console.blue(">> Starting workload <<\n");
+        console.green(">> Starting workload <<\n");
         console.yellow("SQL: %s\n", finalSql);
         console.yellow("Number of threads: %s\n", threads);
         console.yellow("Runtime duration: %s\n", duration);

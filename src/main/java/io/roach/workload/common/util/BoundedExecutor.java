@@ -104,9 +104,8 @@ public class BoundedExecutor {
 
         try {
             while (!executorService.awaitTermination(5, TimeUnit.SECONDS)) {
-                logger.info("Awaiting termination of {} workers", activeWorkers());
+                logger.info("Shutdown - awaiting termination of {} workers", activeWorkers());
             }
-            logger.info("All workers terminated");
         } catch (InterruptedException e) {
             e.printStackTrace();
         }

@@ -19,11 +19,11 @@ public class CallMetric {
         return new String(new char[len]).replace('\0', '-');
     }
 
-    private static final String HEADER_PATTERN = "%-30s %7s %8s %10s %10s %10s %10s %10s %11s %11s";
+    private static final String HEADER_PATTERN = "%-40s %7s %8s %10s %10s %10s %10s %10s %11s %11s";
 
-    private static final String ROW_PATTERN = "%-30s %7.0f %c%7.1f %10.1f %10.2f %10.2f %10.2f %10.2f %,11d %,11d";
+    private static final String ROW_PATTERN = "%-40s %7.0f %c%7.1f %10.1f %10.2f %10.2f %10.2f %10.2f %,11d %,11d";
 
-    private static final String FOOTER_PATTERN = "%-30s %7.0f %c%7.1f %10.1f %10.2f %10.2f %10.2f %10.2f %,11d %,11d";
+    private static final String FOOTER_PATTERN = "%-40s %7.0f %c%7.1f %10.1f %10.2f %10.2f %10.2f %10.2f %,11d %,11d";
 
     public static final int FRAME_SIZE = 500;
 
@@ -60,7 +60,7 @@ public class CallMetric {
         pw.println();
         pw.printf(Locale.US,
                 HEADER_PATTERN,
-                separator(30),// metric
+                separator(40),// metric
                 separator(7), // time
                 separator(8), // ops
                 separator(10), // opm

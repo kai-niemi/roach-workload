@@ -61,29 +61,8 @@ public class BankWorkload extends AbstractWorkload {
     private AccountService accountServiceJpa;
 
     @Override
-    public Metadata getMetadata() {
-        return new Metadata() {
-            @Override
-            public String prompt() {
-                return "bank";
-            }
-
-            @Override
-            public String name() {
-                return "Bank";
-            }
-
-            @Override
-            public String description() {
-                return "Creates multi-legged monetary transactions between random accounts while conserving the total amount";
-            }
-        };
-    }
-
-    @Override
-    @ShellMethod(value = "Print workload info")
-    public void info() {
-        printInfo();
+    public String prompt() {
+        return "bank:$ ";
     }
 
     @ShellMethod(value = "Initialize bank workload")
