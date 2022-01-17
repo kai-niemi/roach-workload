@@ -32,19 +32,37 @@ public class Pools {
     @Autowired
     private ScheduledExecutorService scheduledExecutorService;
 
-    @ShellMethod(value = "Configure connection pool size", key = {"conn-pool-set", "cps"})
+    @ShellMethod(value = "Configure connection and thread pool size", key = {"pool-size", "ps"})
     @ShellMethodAvailability("noActiveWorkersCheck")
-    public void poolSizeSet(
-            @ShellOption(help = "connection pool max size (guide: 4x vCPUs / n:of pools)", defaultValue = "40") int maxSize,
-            @ShellOption(help = "connection pool min idle size", defaultValue = "10") int minSize) {
-        console.green("Setting max pool size %d and min idle to %d\n", maxSize, minSize);
-        hikariDataSource.setMaximumPoolSize(maxSize);
-        hikariDataSource.setMinimumIdle(minSize);
+    public void poolSize(
+            @ShellOption(help = "connection pool max size (guide: 4x vCPUs / n:of pools)", defaultValue = "50") int maxConns,
+            @ShellOption(help = "connection pool min idle size (guide: same as max size)", defaultValue = "10") int minIdle,
+            @ShellOption(help = "thread pool size (guide: 2x vCPUs of host)", defaultValue = "-1") int threadCount,
+            @ShellOption(help = "thread queue size (guide: 2x pool size)", defaultValue = "-1") int queueSize) {
+        if (threadCount < 0) {
+            threadCount = Runtime.getRuntime().availableProcessors() * 2;
+            console.green("Adjusting threadCount to %d (vcpu*2)\n", threadCount);
+        }
+        if (maxConns > threadCount) {
+            threadCount = maxConns;
+            console.green("Adjusting threadCount to %d (max conn)\n", threadCount);
+        }
+        if (queueSize < 0) {
+            queueSize = threadCount * 2;
+            console.green("Adjusting queueSize to %d\n", queueSize);
+        } else if (queueSize < threadCount) {
+            throw new IllegalArgumentException("Queue size must be >= thread size");
+        }
+
+        hikariDataSource.setMaximumPoolSize(maxConns);
+        hikariDataSource.setMinimumIdle(minIdle);
+
+        boundedExecutor.cancelAndRestart(threadCount, queueSize);
     }
 
-    @ShellMethod(value = "Print connection pool information", key = {"conn-pool-get", "cpg"})
+    @ShellMethod(value = "Print connection and thread pool information", key = {"pool-size-info", "psi"})
     @ShellMethodAvailability("dataSourceCheck")
-    public void poolSizeGet(@ShellOption(help = "repeat period in seconds", defaultValue = "0") int repeatTime) {
+    public void poolSizeInfo(@ShellOption(help = "repeat period in seconds", defaultValue = "0") int repeatTime) {
         Runnable r = () -> {
             HikariPoolMXBean poolInfo = hikariDataSource.getHikariPoolMXBean();
             console.yellow("Connection pool status:\n");
@@ -64,38 +82,7 @@ public class Pools {
             console.green("\tpoolName: %s\n", configInfo.getPoolName());
             console.green("\tleakDetectionThreshold: %s\n", configInfo.getLeakDetectionThreshold());
             console.green("\tcatalog: %s\n", configInfo.getCatalog());
-        };
 
-        if (repeatTime > 0) {
-            ScheduledFuture<?> f = scheduledExecutorService
-                    .scheduleAtFixedRate(r, 0, 2, TimeUnit.SECONDS);
-            scheduledExecutorService
-                    .schedule(() -> {
-                        f.cancel(true);
-                    }, repeatTime, TimeUnit.SECONDS);
-        } else {
-            r.run();
-        }
-    }
-
-    @ShellMethod(value = "Configure thread pool size", key = {"thread-pool-set", "tps"})
-    @ShellMethodAvailability("noActiveWorkersCheck")
-    public void threadPoolSet(
-            @ShellOption(help = "core thread pool size (guide: 2x vCPUs of host)") int size,
-            @ShellOption(help = "thread queue size (guide: 2x pool size)", defaultValue = "-1") int queueSize) {
-        if (queueSize < 0) {
-            queueSize = size * 2;
-        }
-        if (queueSize < size) {
-            throw new IllegalArgumentException("Queue size must be >= thread size");
-        }
-        console.green("Setting thread pool size to %d queue size %d\n", size, queueSize);
-        boundedExecutor.cancelAndRestart(size, queueSize);
-    }
-
-    @ShellMethod(value = "Print thread pool information", key = {"thread-pool-get", "tpg"})
-    public void threadPoolGet(@ShellOption(help = "repeat period in seconds", defaultValue = "0") int repeatTime) {
-        Runnable r = () -> {
             ThreadPoolStats stats = ThreadPoolStats.from(boundedExecutor);
             console.yellow("Thread pool status:\n");
             console.green("\tpoolSize: %s\n", stats.poolSize);

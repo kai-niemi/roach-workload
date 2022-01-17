@@ -270,7 +270,7 @@ public class Metrics {
         console.green(" Pending GC: %s\n", m.getObjectPendingFinalizationCount());
     }
 
-    @ShellMethod(value = "Print datasource and DB information", key = {"db-info", "di"})
+    @ShellMethod(value = "Print datasource information", key = {"ds-info", "di"})
     @ShellMethodAvailability("dataSourceCheck")
     public void dbInfo(@ShellOption(help = "print all JDBC metadata", defaultValue = "false") boolean verbose) {
         console.yellow("HikariCP data source\n");

@@ -108,8 +108,8 @@ public class OrdersWorkload extends AbstractWorkload {
         // Consumers
         IntStream.rangeClosed(1, writeThreads).forEach(value -> {
             boundedExecutor.submit(() -> {
+                Class<? extends AbstractOrder> orderType = RandomData.selectRandom(entities);
                 try {
-                    Class<? extends AbstractOrder> orderType = RandomData.selectRandom(entities);
                     List<? extends AbstractOrder> orderBatch = OrderEntities
                             .generateOrderEntities(orderType, batchSizeNum);
                     orderRepository.insertOrders(orderBatch, includeJson);
