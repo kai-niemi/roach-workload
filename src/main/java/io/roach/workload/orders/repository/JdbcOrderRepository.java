@@ -58,7 +58,7 @@ public class JdbcOrderRepository implements OrderRepository {
     }
 
     @Override
-    public void insertOrders(List<? extends AbstractOrder> orders) {
+    public void insertOrders(List<? extends AbstractOrder> orders, boolean includeJson) {
         if (orders.isEmpty()) {
             return;
         }
@@ -122,7 +122,7 @@ public class JdbcOrderRepository implements OrderRepository {
                 ps.setObject(++i, order.getDateUpdated());
 
                 Customer customer = order.getCustomer();
-                if (customer != null) {
+                if (customer != null && includeJson) {
                     try {
                         ps.setObject(++i,
                                 objectMapper.writer().writeValueAsString(customer),

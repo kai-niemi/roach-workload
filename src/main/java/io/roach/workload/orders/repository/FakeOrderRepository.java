@@ -11,7 +11,7 @@ import io.roach.workload.orders.model.AbstractOrder;
 @Profiles.Orders
 public class FakeOrderRepository implements OrderRepository {
     @Override
-    public void insertOrders(List<? extends AbstractOrder> orders) {
+    public void insertOrders(List<? extends AbstractOrder> orders, boolean includeJson) {
     }
 
     @Override

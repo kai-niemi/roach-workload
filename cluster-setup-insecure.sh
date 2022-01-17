@@ -41,7 +41,7 @@ echo "----------------"
 echo "Stage Binaries"
 echo "----------------"
 
-roachprod stage $CLUSTER release v21.2.1
+roachprod stage $CLUSTER release v21.2.4
 
 echo "----------------"
 echo "Start Up Services"

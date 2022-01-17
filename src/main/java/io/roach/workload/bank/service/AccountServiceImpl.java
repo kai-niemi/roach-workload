@@ -2,15 +2,13 @@ package io.roach.workload.bank.service;
 
 import java.math.BigDecimal;
 import java.util.List;
-import java.util.UUID;
 
-import org.hibernate.Session;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.transaction.annotation.Transactional;
 
 import io.roach.workload.Profiles;
 import io.roach.workload.bank.model.Account;
 import io.roach.workload.bank.model.AccountSummary;
-import io.roach.workload.bank.model.AccountType;
 import io.roach.workload.bank.model.Region;
 import io.roach.workload.bank.repository.AccountRepository;
 import io.roach.workload.bank.repository.NamingStrategy;
@@ -46,6 +44,7 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     @TransactionBoundary(readOnly = true)
+    @Transactional
     public List<Account> findAccountsByRegion(String region, int offset, int limit) {
         return accountRepository.findAccountsByRegion(region, offset, limit);
     }

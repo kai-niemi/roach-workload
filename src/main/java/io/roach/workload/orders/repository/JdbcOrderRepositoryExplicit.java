@@ -23,8 +23,8 @@ public class JdbcOrderRepositoryExplicit extends JdbcOrderRepository {
 
     @Override
     @TransactionBoundary
-    public void insertOrders(List<? extends AbstractOrder> orders) {
-        super.insertOrders(orders);
+    public void insertOrders(List<? extends AbstractOrder> orders, boolean includeJson) {
+        super.insertOrders(orders, includeJson);
     }
 
     @Transactional(propagation = Propagation.NEVER)

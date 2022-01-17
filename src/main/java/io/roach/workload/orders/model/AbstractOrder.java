@@ -4,7 +4,20 @@ import java.io.Serializable;
 import java.time.LocalDate;
 import java.util.UUID;
 
-import javax.persistence.*;
+import javax.persistence.AttributeOverride;
+import javax.persistence.AttributeOverrides;
+import javax.persistence.Basic;
+import javax.persistence.Column;
+import javax.persistence.Convert;
+import javax.persistence.Embeddable;
+import javax.persistence.Embedded;
+import javax.persistence.EmbeddedId;
+import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
+import javax.persistence.FetchType;
+import javax.persistence.Inheritance;
+import javax.persistence.InheritanceType;
 
 import org.hibernate.annotations.Columns;
 import org.springframework.util.Assert;
@@ -160,7 +173,8 @@ public abstract class AbstractOrder extends AbstractEntity<AbstractOrder.Id> {
     @Column(name = "payment_method_id")
     private UUID paymentMethod;
 
-    @Transient
+    @Column(name = "customer_profile")
+    @Convert(converter = CustomerConverter.class)
     private Customer customer;
 
     public AbstractOrder() {

@@ -44,10 +44,11 @@ public class DataSourceConfig {
                 .build();
 
         ds.addDataSourceProperty("reWriteBatchedInserts", true); // case sensitive
-        ds.addDataSourceProperty("cachePrepStmts", "true");
-        ds.addDataSourceProperty("prepStmtCacheSize", "250");
-        ds.addDataSourceProperty("prepStmtCacheSqlLimit", "2048");
-        ds.addDataSourceProperty("useServerPrepStmts", "true");
+
+//        ds.addDataSourceProperty("cachePrepStmts", "true");
+//        ds.addDataSourceProperty("prepStmtCacheSize", "250");
+//        ds.addDataSourceProperty("prepStmtCacheSqlLimit", "2048");
+//        ds.addDataSourceProperty("useServerPrepStmts", "true");
 
         ds.addDataSourceProperty("application_name", appName);
         ds.addDataSourceProperty("ApplicationName", appName);

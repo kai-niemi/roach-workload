@@ -27,8 +27,7 @@ public class OrderEntities {
     private static final ThreadLocalRandom random = ThreadLocalRandom.current();
 
     public static <T extends AbstractOrder> List<T> generateOrderEntities(Class<T> orderType,
-                                                                          int orderCount,
-                                                                          boolean includeJson) {
+                                                                          int orderCount) {
         final List<T> orders = new ArrayList<>(orderCount);
 
         final Address a1 = randomAddress();
@@ -62,9 +61,7 @@ public class OrderEntities {
             order.setBillToLastName(ln);
             order.setBillAddress(a2);
 
-            if (includeJson) {
-                order.setCustomer(randomCustomer());
-            }
+            order.setCustomer(randomCustomer());
 
             orders.add(order);
         });

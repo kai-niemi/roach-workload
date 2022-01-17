@@ -3,6 +3,9 @@ package io.roach.workload.orders.model;
 import java.util.Date;
 import java.util.UUID;
 
+import javax.persistence.Embeddable;
+
+//@Embeddable
 public class Customer {
     private UUID id;
 

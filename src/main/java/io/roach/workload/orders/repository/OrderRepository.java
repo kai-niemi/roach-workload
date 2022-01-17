@@ -6,7 +6,7 @@ import java.util.List;
 import io.roach.workload.orders.model.AbstractOrder;
 
 public interface OrderRepository {
-    void insertOrders(List<? extends AbstractOrder> orders);
+    void insertOrders(List<? extends AbstractOrder> orders, boolean includeJson);
 
     List<? extends AbstractOrder> readOrders(Class<? extends AbstractOrder> orderType,
                     List<? extends AbstractOrder> templates);

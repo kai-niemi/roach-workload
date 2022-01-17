@@ -10,8 +10,7 @@ public class OrderEntitiesTest {
     @Test
     public void testCreate() {
         IntStream.rangeClosed(1, 500_000).forEach(value -> {
-            OrderEntities.generateOrderEntities(SchemaSupport.orderEntities.get(0), 16,
-                    false);
+            OrderEntities.generateOrderEntities(SchemaSupport.orderEntities.get(0), 16);
             if (value % 10_000 == 0) {
                 System.out.print(".");
             }

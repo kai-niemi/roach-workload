@@ -24,13 +24,18 @@ public class JpaOrderRepository implements OrderRepository {
 
     @Override
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void insertOrders(List<? extends AbstractOrder> orders) {
+    public void insertOrders(List<? extends AbstractOrder> orders, boolean includeJson) {
         // Default is 64
         if (orders.size() != 64) {
             Session session = em.unwrap(Session.class);
             session.setJdbcBatchSize(orders.size());
         }
-        orders.forEach(order -> em.persist(order)); // transparent
+        orders.forEach(order -> {
+            if (!includeJson) {
+                order.setCustomer(null);
+            }
+            em.persist(order);
+        }); // transparent
     }
 
     @Override

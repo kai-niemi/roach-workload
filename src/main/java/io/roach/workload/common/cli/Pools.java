@@ -35,10 +35,11 @@ public class Pools {
     @ShellMethod(value = "Configure connection pool size", key = {"conn-pool-set", "cps"})
     @ShellMethodAvailability("noActiveWorkersCheck")
     public void poolSizeSet(
-            @ShellOption(help = "connection pool size (guide: 4x vCPUs of CRDB)") int size) {
-        console.green("Setting max pool size and min idle to %d\n", size);
-        hikariDataSource.setMaximumPoolSize(size);
-        hikariDataSource.setMinimumIdle(size);
+            @ShellOption(help = "connection pool max size (guide: 4x vCPUs / n:of pools)", defaultValue = "40") int maxSize,
+            @ShellOption(help = "connection pool min idle size", defaultValue = "10") int minSize) {
+        console.green("Setting max pool size %d and min idle to %d\n", maxSize, minSize);
+        hikariDataSource.setMaximumPoolSize(maxSize);
+        hikariDataSource.setMinimumIdle(minSize);
     }
 
     @ShellMethod(value = "Print connection pool information", key = {"conn-pool-get", "cpg"})

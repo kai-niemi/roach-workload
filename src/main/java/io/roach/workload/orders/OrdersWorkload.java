@@ -2,6 +2,7 @@ package io.roach.workload.orders;
 
 import java.time.Duration;
 import java.time.LocalDate;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.stream.IntStream;
@@ -16,6 +17,7 @@ import io.roach.workload.Profiles;
 import io.roach.workload.common.AbstractWorkload;
 import io.roach.workload.common.util.DurationFormat;
 import io.roach.workload.common.util.Multiplier;
+import io.roach.workload.common.util.RandomData;
 import io.roach.workload.orders.model.AbstractOrder;
 import io.roach.workload.orders.model.Order1;
 import io.roach.workload.orders.model.OrderEntities;
@@ -47,7 +49,7 @@ public class OrdersWorkload extends AbstractWorkload {
 
     @ShellMethod(value = "Initialize orders workload")
     public void init(
-            @ShellOption(help = "number of partitions", defaultValue = "10") int partitions,
+            @ShellOption(help = "number of partitions", defaultValue = "5") int partitions,
             @ShellOption(help = "country code", defaultValue = "USA") String countryCode,
             @ShellOption(help = "drop tables before creating", defaultValue = "false") boolean drop) {
         SchemaSupport schemaSupport = new SchemaSupport(dataSource);
@@ -61,14 +63,14 @@ public class OrdersWorkload extends AbstractWorkload {
 
     @ShellMethod(value = "Run orders workload")
     public void run(
-            @ShellOption(help = "number of partitions (tables)", defaultValue = "10") int partitions,
+            @ShellOption(help = "number of partitions (tables)", defaultValue = "5") int partitions,
             @ShellOption(help = "number of write threads", defaultValue = "-1") int writeThreads,
             @ShellOption(help = "number of read threads", defaultValue = "0") int readThreads,
             @ShellOption(help = "queue capacity (default is unbounded)", defaultValue = "-1") int queueSize,
             @ShellOption(help = "order batch size", defaultValue = "16") String batchSize,
-            @ShellOption(help = "execution duration", defaultValue = "30m") String duration,
+            @ShellOption(help = "execution duration", defaultValue = "45m") String duration,
             @ShellOption(help = "data access method (jdbc|jdbcx|jpa|fake)", defaultValue = "jdbc") String method,
-            @ShellOption(help = "include JSON payload", defaultValue = "false") boolean includeJson
+            @ShellOption(help = "include JSON payload (customer profile)", defaultValue = "false") boolean includeJson
     ) {
         final int batchSizeNum = Multiplier.parseInt(batchSize);
         final Duration runtimeDuration = DurationFormat.parseDuration(duration);
@@ -98,27 +100,19 @@ public class OrdersWorkload extends AbstractWorkload {
         console.yellow("Runtime duration: %s\n", duration);
         console.yellow("Data access method: %s\n", method);
 
-        final LinkedBlockingQueue<List<? extends AbstractOrder>> inBox = new LinkedBlockingQueue<>(queueSize);
         final LinkedBlockingQueue<List<? extends AbstractOrder>> outBox = new LinkedBlockingQueue<>(queueSize);
 
-        // Producer
-        boundedExecutor.submit(() -> {
-            IntStream.rangeClosed(1, partitions).forEach(value -> {
-                Class<? extends AbstractOrder> orderType = SchemaSupport.orderEntities.get(value - 1);
-                try {
-                    inBox.put(OrderEntities.generateOrderEntities(orderType, batchSizeNum, includeJson));
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                }
-            });
-        }, "producer (" + partitions + " tables)", runtimeDuration);
+        final List<Class<? extends AbstractOrder>> entities
+                = Collections.unmodifiableList(SchemaSupport.orderEntities.subList(0, partitions));
 
         // Consumers
         IntStream.rangeClosed(1, writeThreads).forEach(value -> {
             boundedExecutor.submit(() -> {
                 try {
-                    List<? extends AbstractOrder> orderBatch = inBox.take();
-                    orderRepository.insertOrders(orderBatch);
+                    Class<? extends AbstractOrder> orderType = RandomData.selectRandom(entities);
+                    List<? extends AbstractOrder> orderBatch = OrderEntities
+                            .generateOrderEntities(orderType, batchSizeNum);
+                    orderRepository.insertOrders(orderBatch, includeJson);
                     if (readThreads > 0) {
                         outBox.put(orderBatch);
                     }
